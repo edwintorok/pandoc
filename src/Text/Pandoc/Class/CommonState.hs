@@ -23,6 +23,8 @@ import Text.Collate.Lang (Lang)
 import Text.Pandoc.MediaBag (MediaBag)
 import Text.Pandoc.Logging (LogMessage, Verbosity (WARNING))
 import Text.Pandoc.Translations.Types (Translations)
+import Text.Pandoc.Definition (Attr)
+import qualified Data.Map as M
 
 -- | 'CommonState' represents state that is used by all
 -- instances of 'PandocMonad'.  Normally users should not
@@ -41,6 +43,8 @@ data CommonState = CommonState
     -- ^ Controls whether certificate validation is disabled
   , stMediaBag     :: MediaBag
     -- ^ Media parsed from binary containers
+  , stImageAttrs   :: M.Map FilePath Attr
+    -- ^ Image attributes
   , stTranslations :: Maybe (Lang, Maybe Translations)
     -- ^ Translations for localization
   , stInputFiles   :: [FilePath]
@@ -71,6 +75,7 @@ defaultCommonState = CommonState
   , stRequestHeaders = []
   , stNoCheckCertificate = False
   , stMediaBag = mempty
+  , stImageAttrs = M.empty
   , stTranslations = Nothing
   , stInputFiles = []
   , stOutputFile = Nothing

@@ -34,6 +34,7 @@ import Control.Monad.Catch ( MonadMask )
 import Control.Monad.Except (throwError)
 import qualified Data.ByteString.Lazy as BL
 import Data.Maybe (fromMaybe, isJust, isNothing)
+import Data.Map (findWithDefault)
 import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -308,7 +309,7 @@ convertWithOpts' scriptingEngine istty datadir opts = do
             )
 
   when (format == "docx" && not (optSandbox opts)) $ do
-    createPngFallbacks (writerDpi writerOptions)
+    createPngFallbacks writerOptions
 
   output <- case writer of
     ByteStringWriter f
@@ -372,14 +373,16 @@ readAbbreviations mbfilepath =
     >>= fmap (Set.fromList . filter (not . T.null) . T.lines) .
          toTextM (fromMaybe mempty mbfilepath)
 
-createPngFallbacks :: (PandocMonad m, MonadIO m) => Int -> m ()
-createPngFallbacks dpi = do
+createPngFallbacks :: (PandocMonad m, MonadIO m) => WriterOptions -> m ()
+createPngFallbacks opts = do
   -- create fallback pngs for svgs
   items <- mediaItems <$> getMediaBag
+  attributes <- getImageAttrs
   forM_ items $ \(fp, mt, bs) ->
     case T.takeWhile (/=';') mt of
       "image/svg+xml" -> do
-        res <- svgToPng dpi bs
+        let attr = Data.Map.findWithDefault nullAttr fp attributes
+        res <- svgToPng (writerDpi opts) bs
         case res of
           Right bs' -> do
             let fp' = fp <> ".png"

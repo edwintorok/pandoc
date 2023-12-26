@@ -34,6 +34,7 @@ module Text.Pandoc.Class.PandocMonad
   , getLog
   , setVerbosity
   , getVerbosity
+  , getImageAttrs
   , getMediaBag
   , setMediaBag
   , insertMedia
@@ -86,6 +87,7 @@ import qualified Debug.Trace
 import qualified Text.Pandoc.MediaBag as MB
 import qualified Data.Text.Encoding as TSE
 import qualified Data.Text.Encoding.Error as TSE
+import Data.Map (Map, insert)
 
 -- | The PandocMonad typeclass contains all the potentially
 -- IO-related functions used in pandoc's readers and writers.
@@ -202,12 +204,26 @@ setMediaBag mb = modifyCommonState $ \st -> st{stMediaBag = mb}
 getMediaBag :: PandocMonad m => m MediaBag
 getMediaBag = getsCommonState stMediaBag
 
--- | Insert an item into the media bag.
+-- | Initialize the image attributes
+setImageAttrs :: PandocMonad m => Map FilePath Attr -> m ()
+setImageAttrs mb = modifyCommonState $ \st -> st{stImageAttrs = mb}
+
+-- | Retrieve the image attributes
+getImageAttrs :: PandocMonad m => m (Map FilePath Attr)
+getImageAttrs = getsCommonState stImageAttrs
+
 insertMedia :: PandocMonad m => FilePath -> Maybe MimeType -> BL.ByteString -> m ()
 insertMedia fp mime bs = do
-  mb <- getMediaBag
-  let mb' = MB.insertMedia fp mime bs mb
-  setMediaBag mb'
+    mb <- getMediaBag
+    let mb' = MB.insertMedia fp mime bs mb
+    setMediaBag mb'
+
+-- | Insert an item into the media bag.
+insertAttr :: PandocMonad m => FilePath -> Attr -> m ()
+insertAttr fp attr = do
+    attrs <- getImageAttrs
+    let attrs' = Data.Map.insert fp attr attrs
+    setImageAttrs attrs'
 
 -- | Retrieve the input filenames.
 getInputFiles :: PandocMonad m => m [FilePath]
@@ -464,6 +480,7 @@ fillMediaBag d = walkM handleImage d
                 Nothing -> do
                   (bs, mt) <- fetchItem src
                   insertMedia fp mt (BL.fromStrict bs)
+              insertAttr fp attr
               return $ Image attr lab (src, tit))
           (\e ->
               case e of
