@@ -71,6 +71,7 @@ import Text.Pandoc.URI (isURI)
 import Text.Pandoc.Writers.Shared (lookupMetaString)
 import Text.Pandoc.Readers.Markdown (yamlToMeta)
 import qualified Text.Pandoc.UTF8 as UTF8
+import Text.Pandoc.ImageSize (desiredSizeInPoints, imageSize)
 #ifndef _WINDOWS
 import System.Posix.IO (stdOutput)
 import System.Posix.Terminal (queryTerminal)
@@ -382,7 +383,9 @@ createPngFallbacks opts = do
     case T.takeWhile (/=';') mt of
       "image/svg+xml" -> do
         let attr = Data.Map.findWithDefault nullAttr fp attributes
-        res <- svgToPng (writerDpi opts) bs
+        let imageSize' = imageSize opts (BL.toStrict bs)
+        let dims = either (const Nothing) (Just . desiredSizeInPoints opts attr) imageSize'
+        res <- svgToPng (writerDpi opts) dims bs
         case res of
           Right bs' -> do
             let fp' = fp <> ".png"
