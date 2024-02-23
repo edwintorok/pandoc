@@ -21,8 +21,9 @@ import Control.Monad.State.Strict ( modify, gets )
 import Control.Monad ( unless , zipWithM )
 import Control.Monad.Except ( throwError )
 import Data.Array ( elems, (!), assocs, indices )
-import Data.Text (Text)
+import Data.Text (Text, unpack)
 import Data.Maybe (catMaybes)
+import Data.String (fromString)
 import Text.Pandoc.Definition
     ( ColSpec,
       Caption(Caption),
@@ -72,8 +73,11 @@ tableToOpenXML :: PandocMonad m
                -> WS m [Content]
 tableToOpenXML opts blocksToOpenXML gridTable = do
   setFirstPara
-  let (Grid.Table (ident,_,_) caption colspecs _rowheads thead tbodies tfoot) =
+  let (Grid.Table (ident,_,kvs) caption colspecs _rowheads thead tbodies tfoot) =
         gridTable
+  let tblStyle = case lookup dynamicStyleKey kvs of
+                   Just t -> fromString . unpack $ t
+                   _ -> "Table"
   let (Caption _maybeShortCaption captionBlocks) = caption
   tablenum <- gets stNextTableNum
   unless (null captionBlocks) $
@@ -114,7 +118,7 @@ tableToOpenXML opts blocksToOpenXML gridTable = do
   let hasWidths = not $ all ((== ColWidthDefault) . snd) colspecs
   let tbl = mknode "w:tbl" []
         ( mknode "w:tblPr" []
-          ( [ mknode "w:tblStyle" [("w:val","Table")] (),
+          ( [ mknode "w:tblStyle" [("w:val",tblStyle)] (),
               mknode "w:tblW" tblWattr () ] ++
             [ mknode "w:jc" [("w:val","left")] () | indent > 0 ] ++
             [ mknode "w:tblInd" [("w:w", tshow indent),("w:type","dxa")] ()
