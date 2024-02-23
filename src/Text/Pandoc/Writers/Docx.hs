@@ -980,10 +980,6 @@ getUniqueId = do
   modify $ \st -> st{stCurId = n + 1}
   return $ tshow n
 
--- | Key for specifying user-defined docx styles.
-dynamicStyleKey :: Text
-dynamicStyleKey = "custom-style"
-
 -- | Convert a Pandoc block element to OpenXML.
 blockToOpenXML :: (PandocMonad m) => WriterOptions -> Block -> WS m [Content]
 blockToOpenXML opts blk = withDirection $ blockToOpenXML' opts blk

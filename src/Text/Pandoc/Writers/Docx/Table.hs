@@ -42,6 +42,7 @@ import Text.Pandoc.Writers.Docx.Types
       WriterEnv(..),
       setFirstPara,
       pStyleM,
+      dynamicStyleKey,
       withParaProp,
       withParaPropM )
 import Control.Monad.Reader (asks)

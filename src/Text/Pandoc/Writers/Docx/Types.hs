@@ -21,6 +21,7 @@ module Text.Pandoc.Writers.Docx.Types
   , setFirstPara
   , withParaProp
   , withParaPropM
+  , dynamicStyleKey
   ) where
 
 import Control.Applicative ((<|>))
@@ -192,3 +193,7 @@ withParaPropM md p = do
 isStyle :: Element -> Bool
 isStyle e = isElem [] "w" "rStyle" e ||
             isElem [] "w" "pStyle" e
+
+-- | Key for specifying user-defined docx styles.
+dynamicStyleKey :: Text
+dynamicStyleKey = "custom-style"
